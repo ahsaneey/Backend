@@ -1,5 +1,8 @@
 ﻿using System.Security.Claims;
+<<<<<<< HEAD
 using Calligraphy.Application.Interfaces.Services;
+=======
+>>>>>>> 99b30f21cfc0eb191daf1a64225c8f3cd3d30208
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,6 +12,7 @@ namespace Calligraphy.Api.Controllers;
 [Route("api/[controller]")]
 public class UserController : ControllerBase
 {
+<<<<<<< HEAD
     private readonly IUserService _userService;
 
     public UserController(IUserService userService)
@@ -34,5 +38,17 @@ public class UserController : ControllerBase
             return NotFound();
 
         return Ok(user);
+=======
+    [Authorize]
+    [HttpGet("profile")]
+    public IActionResult GetProfile()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        return Ok(new
+        {
+            UserId = userId
+        });
+>>>>>>> 99b30f21cfc0eb191daf1a64225c8f3cd3d30208
     }
 }
