@@ -1,4 +1,4 @@
-﻿using Calligraphy.Application.Interfaces.Repositories;
+﻿using Calligraphy.Application.Interfaces.Services;
 using Calligraphy.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,17 +8,17 @@ namespace Calligraphy.Api.Controllers;
 [Route("api/[controller]")]
 public class ProductController : ControllerBase
 {
-    private readonly IProductRepository _productRepository;
+    private readonly IProductService _productService;
 
-    public ProductController(IProductRepository productRepository)
+    public ProductController(IProductService productService)
     {
-        _productRepository = productRepository;
+        _productService = productService;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var products = await _productRepository.GetAllAsync();
+        var products = await _productService.GetAllAsync();
 
         return Ok(products);
     }
@@ -26,7 +26,7 @@ public class ProductController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var product = await _productRepository.GetByIdAsync(id);
+        var product = await _productService.GetByIdAsync(id);
 
         if (product == null)
         {
@@ -36,50 +36,41 @@ public class ProductController : ControllerBase
         return Ok(product);
     }
 
-   
     [HttpPost]
     public async Task<IActionResult> Create(Product product)
     {
-        await _productRepository.AddAsync(product);
-        await _productRepository.SaveChangesAsync();
+        var createdProduct = await _productService.CreateAsync(product);
 
-        return Ok(product);
+        return Ok(createdProduct);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, Product product)
     {
-        var existingProduct = await _productRepository.GetByIdAsync(id);
+        if (id != product.Id)
+        {
+            return BadRequest("Product ID does not match.");
+        }
 
-        if (existingProduct == null)
+        var updatedProduct = await _productService.UpdateAsync(product);
+
+        if (updatedProduct == null)
         {
             return NotFound();
         }
 
-        existingProduct.Name = product.Name;
-        existingProduct.Description = product.Description;
-        existingProduct.Price = product.Price;
-        existingProduct.ImageUrl = product.ImageUrl;
-        existingProduct.StockQuantity = product.StockQuantity;
-
-        await _productRepository.UpdateAsync(existingProduct);
-        await _productRepository.SaveChangesAsync();
-
-        return Ok(existingProduct);
+        return Ok(updatedProduct);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var product = await _productRepository.GetByIdAsync(id);
+        var deleted = await _productService.DeleteAsync(id);
 
-        if (product == null)
+        if (!deleted)
         {
             return NotFound();
         }
-
-        await _productRepository.DeleteAsync(product);
-        await _productRepository.SaveChangesAsync();
 
         return NoContent();
     }
