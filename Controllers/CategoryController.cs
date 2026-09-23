@@ -1,4 +1,6 @@
-﻿using Calligraphy.Application.Interfaces.Services;
+﻿using Calligraphy.Application.DTOs.Common;
+using Calligraphy.Application.Interfaces.Services;
+using Calligraphy.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Calligraphy.Api.Controllers;
@@ -19,7 +21,12 @@ public class CategoryController : ControllerBase
     {
         var categories = await _categoryService.GetAllAsync();
 
-        return Ok(categories);
+        return Ok(
+            ApiResponse<IEnumerable<Category>>.Ok(
+                categories,
+                "Categories retrieved successfully."
+            )
+        );
     }
 
     [HttpGet("{id}")]
@@ -28,8 +35,20 @@ public class CategoryController : ControllerBase
         var category = await _categoryService.GetByIdAsync(id);
 
         if (category == null)
-            return NotFound("Category not found.");
+        {
+            return NotFound(
+                ApiResponse<Category>.Fail(
+                    "Category not found."
+                )
+            );
+        }
 
-        return Ok(category);
+        return Ok(
+            ApiResponse<Category>.Ok(
+                category,
+                "Category retrieved successfully."
+            )
+        );
     }
 }
+
