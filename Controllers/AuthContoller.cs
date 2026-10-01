@@ -1,4 +1,5 @@
-﻿using Calligraphy.Application.DTOs.Auth;
+﻿using System.Linq.Expressions;
+using Calligraphy.Application.DTOs.Auth;
 using Calligraphy.Application.Interfaces;
 using Calligraphy.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -32,13 +33,21 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
-        var result = await _authService.LoginAsync(request);
-
-        if (result == null)
+        try 
         {
-            return Unauthorized("Invalid email or password.");
-        }
 
-        return Ok(result);
+            var result = await _authService.LoginAsync(request);
+
+            if (result == null)
+            {
+                return Unauthorized("Invalid email or password.");
+            }
+
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
     }
 }

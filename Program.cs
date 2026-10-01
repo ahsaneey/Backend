@@ -1,4 +1,5 @@
 using Calligraphy.Infrastructure.Extensions;
+using Calligraphy.Application.Configuration;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,6 +31,8 @@ builder.Services.AddSwaggerGen(options =>
 
 
 builder.Services.AddOpenApi();
+builder.Services.Configure<RazorpaySettings>(
+    builder.Configuration.GetSection("Razorpay"));
 
 
 var app = builder.Build();
@@ -40,12 +43,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseAuthentication();
-app.UseAuthorization();
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+
 app.UseAuthorization();
+
+
+
 
 app.MapControllers();
 

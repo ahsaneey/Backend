@@ -1,5 +1,6 @@
 using Calligraphy.Application.DTOs.Common;
 using Calligraphy.Application.Interfaces.Services;
+using Calligraphy.Application.DTOs.Product;
 using Calligraphy.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
@@ -43,71 +44,6 @@ public class ProductController : ControllerBase
             ApiResponse<Product>.Ok(
                 product,
                 "Product retrieved successfully."
-            )
-        );
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> Create(Product product)
-    {
-        var createdProduct = await _productService.CreateAsync(product);
-
-        return Ok(
-            ApiResponse<Product>.Ok(
-                createdProduct,
-                "Product created successfully."
-            )
-        );
-    }
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, Product product)
-    {
-        if (id != product.Id)
-        {
-            return BadRequest(
-                ApiResponse<Product>.Fail(
-                    "Product ID does not match."
-                )
-            );
-        }
-
-        var updatedProduct = await _productService.UpdateAsync(product);
-
-        if (updatedProduct == null)
-        {
-            return NotFound(
-                ApiResponse<Product>.Fail(
-                    "Product not found."
-                )
-            );
-        }
-
-        return Ok(
-            ApiResponse<Product>.Ok(
-                updatedProduct,
-                "Product updated successfully."
-            )
-        );
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var deleted = await _productService.DeleteAsync(id);
-
-        if (!deleted)
-        {
-            return NotFound(
-                ApiResponse<object>.Fail(
-                    "Product not found."
-                )
-            );
-        }
-
-        return Ok(
-            ApiResponse<object>.Ok(
-                null,
-                "Product deleted successfully."
             )
         );
     }
