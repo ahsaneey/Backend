@@ -19,6 +19,7 @@ public class CartController : ControllerBase
     }
 
     [HttpGet]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> GetCart()
     {
         var userId = GetUserId();
@@ -47,7 +48,8 @@ public class CartController : ControllerBase
                     Id = item.Product.Id,
                     Name = item.Product.Name,
                     Price = item.Product.Price,
-                    ImageUrl = item.Product.ImageUrl
+                    ImageUrl = item.Product.ImageUrl,
+                    StockQuantity = item.Product.StockQuantity
                 }
             })
         });

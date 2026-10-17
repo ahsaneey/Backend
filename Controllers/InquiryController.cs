@@ -1,4 +1,5 @@
-﻿using Calligraphy.Application.DTOs.Inquiry;
+﻿using System.Security.Claims;
+using Calligraphy.Application.DTOs.Inquiry;
 using Calligraphy.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,9 +16,15 @@ public class InquiryController : ControllerBase
     {
         _inquiryService = inquiryService;
     }
+
     [HttpPost]
+    [Authorize(Roles = "User")]
     public async Task<IActionResult> Create(CreateInquiryDto dto)
     {
+        // Use the account's own details, not what was typed in the form
+        dto.Name = User.FindFirstValue(ClaimTypes.Name) ?? dto.Name;
+        dto.Email = User.FindFirstValue(ClaimTypes.Email) ?? dto.Email;
+
         await _inquiryService.CreateInquiryAsync(dto);
 
         return Ok(new

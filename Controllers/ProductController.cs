@@ -16,10 +16,18 @@ public class ProductController : ControllerBase
     {
         _productService = productService;
     }
+
+
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int? categoryId,
+        [FromQuery] string? style,
+        [FromQuery] string? sort)
     {
-        var products = await _productService.GetAllAsync();
+        var products = await _productService.GetFilteredAsync(
+            categoryId,
+            style,
+            sort);
 
         return Ok(
             ApiResponse<IEnumerable<Product>>.Ok(
@@ -28,6 +36,7 @@ public class ProductController : ControllerBase
             )
         );
     }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {

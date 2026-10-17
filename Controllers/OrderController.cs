@@ -47,6 +47,8 @@ public class OrderController : ControllerBase
             {
                 item.Id,
                 item.ProductId,
+                ProductName = item.Product.Name,
+                ImageUrl = item.Product.ImageUrl,
                 item.Quantity,
                 item.Price
             })
@@ -86,8 +88,11 @@ public class OrderController : ControllerBase
             {
                 item.Id,
                 item.ProductId,
+                ProductName=item.Product.Name,
+                ImageUrl = item.Product.Name,
                 item.Quantity,
-                item.Price
+                item.Price,
+                
             })
         });
     }
@@ -96,31 +101,38 @@ public class OrderController : ControllerBase
     // POST: api/Order
     [HttpPost]
     public async Task<IActionResult> CreateOrder(
-        CreateOrderDto dto)
+    CreateOrderDto dto)
     {
         var userId = GetUserId();
 
         if (userId == null)
             return Unauthorized();
 
-        var order =
-            await _orderService.CreateOrderAsync(
-                userId.Value,
-                dto);
-
-        if (order == null)
-            return BadRequest(
-                "Invalid address or cart is empty.");
-
-        return Ok(new
+        try
         {
-            order.Id,
-            order.UserId,
-            order.TotalAmount,
-            order.Status,
-            order.ShippingAddress,
-            order.CreatedAt
-        });
+            var order =
+                await _orderService.CreateOrderAsync(
+                    userId.Value,
+                    dto);
+
+            if (order == null)
+                return BadRequest(
+                    "Invalid address or cart is empty.");
+
+            return Ok(new
+            {
+                order.Id,
+                order.UserId,
+                order.TotalAmount,
+                order.Status,
+                order.ShippingAddress,
+                order.CreatedAt
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     private int? GetUserId()

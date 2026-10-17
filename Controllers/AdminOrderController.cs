@@ -1,4 +1,5 @@
 ﻿using Calligraphy.Application.Interfaces.Services;
+using Calligraphy.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,30 +19,27 @@ public class AdminOrderController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetAllOrders(
-        [FromQuery] string ? status = null)
+        [FromQuery] string? search,
+        [FromQuery] string? status,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 8)
     {
-        var orders = await _orderService.GetAllOrdersAsync(status);
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 50);
 
-        var result = orders.Select(order => new
+        var (items, totalCount) = await _orderService.GetAdminPagedAsync(
+            search, status, page, pageSize);
+
+        return Ok(new
         {
-            order.Id,
-            order.UserId,
-            order.TotalAmount,
-            order.Status,
-            order.ShippingAddress,
-            order.CreatedAt,
-
-            OrderItems = order.OrderItems.Select(item => new
-            {
-                item.Id,
-                item.ProductId,
-                item.Quantity,
-                item.Price
-            })
+            orders = items.Select(ToAdminDto),
+            totalCount,
+            page,
+            pageSize,
+            totalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
         });
-
-        return Ok(result);
     }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetOrderById(int id)
     {
@@ -50,23 +48,7 @@ public class AdminOrderController : ControllerBase
         if (order == null)
             return NotFound("Order not found.");
 
-        return Ok(new
-        {
-            order.Id,
-            order.UserId,
-            order.TotalAmount,
-            order.Status,
-            order.ShippingAddress,
-            order.CreatedAt,
-
-            OrderItems = order.OrderItems.Select(item => new
-            {
-                item.Id,
-                item.ProductId,
-                item.Quantity,
-                item.Price
-            })
-        });
+        return Ok(ToAdminDto(order));
     }
 
     [HttpPut("{id}/status")]
@@ -74,17 +56,45 @@ public class AdminOrderController : ControllerBase
         int id,
         [FromQuery] string status)
     {
-        var updated =
-            await _orderService.UpdateOrderStatusAsync(
-                id,
-                status);
+        if (string.IsNullOrWhiteSpace(status))
+            return BadRequest("Status is required.");
 
-        if (!updated)
-            return NotFound("Order not found.");
-
-        return Ok(new
+        try
         {
-            message = "Order status updated successfully."
-        });
+            var updated = await _orderService.UpdateOrderStatusAsync(id, status);
+
+            if (!updated)
+                return NotFound("Order not found.");
+
+            return Ok(new { message = "Order status updated successfully." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
+
+    private static object ToAdminDto(Order order) => new
+    {
+        order.Id,
+        order.UserId,
+        CustomerName = order.User?.Name,
+        CustomerEmail = order.User?.Email,
+        order.TotalAmount,
+        order.Status,
+        order.ShippingAddress,
+        order.CreatedAt,
+        PaymentMethod = order.Payment?.PaymentMethod,
+        PaymentStatus = order.Payment?.Status,
+        TotalQuantity = order.OrderItems.Sum(i => i.Quantity),
+        OrderItems = order.OrderItems.Select(item => new
+        {
+            item.Id,
+            item.ProductId,
+            ProductName = item.Product?.Name,
+            ImageUrl = item.Product?.ImageUrl,
+            item.Quantity,
+            item.Price
+        })
+    };
 }

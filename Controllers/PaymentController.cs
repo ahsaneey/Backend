@@ -20,24 +20,47 @@ public class PaymentController : ControllerBase
 
     [HttpPost("create/{orderId}")]
     public async Task<ActionResult<CreatePaymentResponseDto>> CreatePayment(
-        int orderId)
+        int orderId,
+        [FromQuery] string paymentMethod)
     {
-        var userId = int.Parse(
-            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        var result = await _paymentService.CreatePaymentAsync(
-            orderId,
-            userId);
+        if (!int.TryParse(userIdValue, out int userId))
+            return Unauthorized();
 
-        return Ok(result);
+        if (string.IsNullOrWhiteSpace(paymentMethod))
+            return BadRequest("Payment method is required.");
+
+        paymentMethod = paymentMethod.ToUpperInvariant();
+
+        if (paymentMethod != "COD" && paymentMethod != "UPI")
+            return BadRequest("Payment method must be COD or UPI.");
+
+        try
+        {
+            var result = await _paymentService.CreatePaymentAsync(
+                orderId,
+                userId,
+                paymentMethod);
+
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPost("verify")]
     public async Task<IActionResult> VerifyPayment(
         VerifyPaymentDto dto)
     {
-        var userId = int.Parse(
-            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdValue, out int userId))
+            return Unauthorized();
 
         var verified =
             await _paymentService.VerifyPaymentAsync(

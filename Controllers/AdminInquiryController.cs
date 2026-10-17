@@ -55,4 +55,17 @@ public class AdminInquiryController : ControllerBase
             message = "Inquiry status updated successfully."
         });
     }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var deleted = await _inquiryService.DeleteInquiryAsync(id);
+
+        if (!deleted)
+            return NotFound("Inquiry not found.");
+
+        return Ok(new
+        {
+            message = "Inquiry deleted successfully."
+        });
+    }
 }

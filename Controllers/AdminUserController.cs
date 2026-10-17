@@ -17,19 +17,42 @@ public class AdminUserController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAllUsers()
+    public async Task<IActionResult> GetAllUsers(
+    [FromQuery] string? search = null,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 5)
     {
-        var users = await _userService.GetAllAsync();
+        // Validate pagination parameters
+        if (page < 1)
+            return BadRequest("Page must be greater than 0.");
 
-        var result = users.Select(user => new
+        if (pageSize < 1 || pageSize > 100)
+            return BadRequest("Page size must be between 1 and 100.");
+
+        // Fetch filtered and paginated users from the repository
+        var (users, totalCount) = await _userService.GetUsersPagedAsync(
+            search,
+            page,
+            pageSize);
+
+        var totalPages = (int)Math.Ceiling(
+            totalCount / (double)pageSize);
+
+        var result = new
         {
-            user.Id,
-            user.Name,
-            user.Email,
-            user.Role,
-            user.IsBlocked
-            
-        });
+            Users = users.Select(user => new
+            {
+                user.Id,
+                user.Name,
+                user.Email,
+                user.Role,
+                user.IsBlocked
+            }),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+            TotalPages = totalPages
+        };
 
         return Ok(result);
     }

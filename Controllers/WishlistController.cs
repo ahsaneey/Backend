@@ -19,6 +19,7 @@ public class WishlistController : ControllerBase
 
     // GET: api/Wishlist
     [HttpGet]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> GetWishlist()
     {
         var userId = int.Parse(

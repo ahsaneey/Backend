@@ -19,33 +19,51 @@ public class AdminProductController : ControllerBase
         _productService = productService;
     }
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+    [FromQuery] string? search,
+    [FromQuery] bool showDeleted = false,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 5)
     {
-        var products = await _productService.GetAllForAdminAsync();
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 50);
+
+        var (items, totalCount) = await _productService.GetAdminPagedAsync(
+            search, showDeleted, page, pageSize);
+
+        var result = new
+        {
+            items,
+            totalCount,
+            page,
+            pageSize,
+            totalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+        };
 
         return Ok(
-            ApiResponse<IEnumerable<Product>>.Ok(
-                products,
+            ApiResponse<object>.Ok(
+                result,
                 "Admin products retrieved successfully."
             )
         );
     }
     [HttpPost]
-    public async Task<IActionResult> Create(CreateProductDto dto)
+    public async Task<IActionResult> Create([FromForm] CreateProductDto dto)
     {
-        var createdProduct = await _productService.CreateAsync(dto);
+        var result = await _productService.CreateAsync(dto);
 
         return Ok(
             ApiResponse<Product>.Ok(
-                createdProduct,
-                "Product created successfully."
+                result.Product,
+                result.Message
             )
         );
     }
+
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(
-    int id,
-    ProductUpdateDto dto)
+     int id,
+     [FromForm] ProductUpdateDto dto)
     {
         var updatedProduct =
             await _productService.UpdateAsync(id, dto);
